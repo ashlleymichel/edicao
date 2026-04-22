@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Edição</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#111111; --sidebar:#181818; --s-act:#212121;
+  --surf:#1c1c1c; --surf2:#222222;
+  --bdr:#272727; --bdr2:#303030; --bdr3:#3a3a3a;
+  --text:#e2e2e2; --sub:#888888; --dim:#484848; --dimmer:#333333;
+  --rad:9px; --rad-sm:6px;
+  --s1-t:#7a7a7a; --s1-b:rgba(122,122,122,.10);
+  --s2-t:#ababab; --s2-b:rgba(171,171,171,.10);
+  --s3-t:#d8d8d8; --s3-b:rgba(216,216,216,.10);
+  --red:#c0392b; --red-b:rgba(192,57,43,.10);
+}
+
+html,body{height:100%;overflow:hidden}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:4px}
+
+/* ═══ LAYOUT ═══ */
+.layout{display:flex;height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar{width:230px;min-width:230px;background:var(--sidebar);border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
+
+.sidebar-greeting{padding:22px 18px 18px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.greeting-time{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer);margin-bottom:3px}
+.greeting-main{font-size:.9rem;font-weight:700;color:var(--text);letter-spacing:-.02em;line-height:1.25}
+.greeting-sub{font-size:.7rem;color:var(--sub);margin-top:2px}
+
+.s-label{padding:16px 18px 6px;font-size:.59rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer)}
+.s-nav{padding:0 8px;display:flex;flex-direction:column;gap:1px}
+
+.n-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--rad-sm);background:none;border:none;width:100%;text-align:left;font-family:'Poppins',sans-serif;font-size:.77rem;font-weight:500;color:var(--sub);cursor:pointer;position:relative;transition:background .12s,color .12s;user-select:none}
+.n-item:hover{background:var(--s-act);color:var(--text)}
+.n-item.active{background:var(--s-act);color:var(--text)}
+.n-item.active::before{content:'';position:absolute;left:-8px;top:50%;transform:translateY(-50%);width:2px;height:18px;border-radius:0 2px 2px 0;background:var(--sub)}
+
+.n-icon{width:26px;height:26px;border-radius:6px;background:var(--surf2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--dim);transition:background .12s,color .12s}
+.n-item:hover .n-icon,.n-item.active .n-icon{background:var(--bdr2);color:var(--sub)}
+.n-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.n-count{font-size:.59rem;font-weight:600;color:var(--dim);background:var(--surf2);border-radius:20px;padding:1px 6px;min-width:20px;text-align:center;flex-shrink:0;transition:color .12s}
+.n-item:hover .n-count,.n-item.active .n-count{color:var(--sub)}
+.e-avatar{width:22px;height:22px;border-radius:50%;background:var(--surf2);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;font-size:.52rem;font-weight:700;color:var(--sub);flex-shrink:0;transition:background .12s,color .12s}
+.n-item:hover .e-avatar,.n-item.active .e-avatar{background:var(--bdr2);color:var(--text)}
+
+.s-divider{height:1px;background:var(--bdr);margin:8px 18px}
+.proj-empty{padding:6px 10px;font-size:.72rem;color:var(--dimmer);font-style:italic}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 26px;height:56px;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-title{font-size:.82rem;font-weight:600;color:var(--sub)}
+
+.back-btn{width:28px;height:28px;border:1px solid var(--bdr2);border-radius:6px;background:none;color:var(--sub);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s;flex-shrink:0}
+.back-btn:hover{border-color:#555;color:var(--text);background:var(--surf2)}
+
+.btn-add{display:flex;align-items:center;gap:6px;padding:6px 12px;background:none;border:1px solid var(--bdr2);border-radius:var(--rad-sm);color:var(--sub);font-family:'Poppins',sans-serif;font-size:.74rem;font-weight:500;cursor:pointer;transition:all .12s;white-space:nowrap}
+.btn-add:hover{border-color:#555;color:var(--text);background:var(--surf2)}
+
+.content{flex:1;overflow-y:auto;padding:22px 26px 48px}
+
+/* ── STATS ── */
+.stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:22px}
+.stats-strip.c3{grid-template-columns:repeat(3,1fr)}
+.stat-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rad);padding:14px 16px;transition:border-color .12s}
+.stat-card:hover{border-color:var(--bdr2)}
+.stat-n{font-size:1.5rem;font-weight:700;color:var(--text);line-height:1;letter-spacing:-.04em;margin-bottom:4px}
+.stat-l{font-size:.6rem;font-weight:600;color:var(--dim);letter-spacing:.07em;text-transform:uppercase}
+
+.list-label{font-size:.59rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+
+/* ── PROJECT CARDS (list view) ── */
+.proj-list{display:flex;flex-direction:column;gap:5px}
+
+.proj-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rad);padding:12px 15px;display:flex;align-items:center;gap:12px;transition:border-color .12s,background .12s;animation:fadeUp .18s ease;cursor:pointer}
+.proj-card:hover{border-color:var(--bdr2);background:var(--surf2)}
+.proj-card.confirming{border-color:var(--red);background:var(--red-b)}
+
+.p-num{font-size:.62rem;font-weight:600;color:var(--dim);min-width:20px;text-align:right;font-variant-numeric:tabular-nums}
+.p-thumb{width:32px;height:32px;background:var(--surf2);border:1px solid var(--bdr2);border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--dim);flex-shrink:0}
+.p-info{flex:1;min-width:0}
+.p-title{font-size:.82rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;letter-spacing:-.01em}
+.p-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.p-date{font-size:.62rem;color:var(--dim)}
+.p-editors{display:flex;gap:4px}
+.p-ed-dot{width:18px;height:18px;border-radius:50%;background:var(--surf2);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:700;color:var(--sub)}
+
+.p-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;flex-shrink:0}
+.badge-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0}
+.badge.nao_editado{color:var(--s1-t);background:var(--s1-b)}.badge.nao_editado .badge-dot{background:var(--s1-t)}
+.badge.editando{color:var(--s2-t);background:var(--s2-b)}.badge.editando .badge-dot{background:var(--s2-t)}
+.badge.editado{color:var(--s3-t);background:var(--s3-b)}.badge.editado .badge-dot{background:var(--s3-t)}
+
+/* ── ACTION BUTTONS ── */
+.icon-btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:none;border:1px solid var(--bdr);border-radius:var(--rad-sm);color:var(--dim);cursor:pointer;transition:all .12s}
+.icon-btn:hover{color:var(--sub);border-color:var(--bdr2);background:var(--surf2)}
+.icon-btn.del:hover{color:var(--red);border-color:var(--red);background:var(--red-b)}
+
+.confirm-inline{display:flex;align-items:center;gap:6px;animation:fadeUp .12s ease}
+.confirm-text{font-size:.68rem;color:var(--red);font-weight:600;white-space:nowrap}
+.btn-yes,.btn-no{padding:3px 10px;border-radius:5px;font-family:'Poppins',sans-serif;font-size:.64rem;font-weight:600;cursor:pointer;border:1px solid;transition:all .12s;white-space:nowrap}
+.btn-yes{background:var(--red);border-color:var(--red);color:#fff}.btn-yes:hover{background:#a93226}
+.btn-no{background:none;border-color:var(--bdr2);color:var(--sub)}.btn-no:hover{color:var(--text);border-color:#555}
+
+/* ── EMPTY STATE ── */
+.empty-state{display:flex;flex-direction:column;align-items:center;padding:56px 0;gap:10px;animation:fadeUp .2s ease}
+.empty-state p{font-size:.8rem;color:var(--sub)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══════════════════════════════
+   PROJECT DETAIL VIEW
+═══════════════════════════════ */
+.detail-wrap{animation:fadeUp .2s ease}
+
+/* status tabs */
+.status-tabs{display:flex;gap:5px;margin-bottom:24px;flex-wrap:wrap}
+.status-tab{padding:5px 13px;border-radius:20px;font-size:.68rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;border:1px solid var(--bdr2);background:none;color:var(--dim);font-family:'Poppins',sans-serif;transition:all .14s}
+.status-tab:hover{color:var(--sub);border-color:#555}
+.status-tab.active.nao_editado{color:var(--s1-t);background:var(--s1-b);border-color:rgba(122,122,122,.3)}
+.status-tab.active.editando{color:var(--s2-t);background:var(--s2-b);border-color:rgba(171,171,171,.3)}
+.status-tab.active.editado{color:var(--s3-t);background:var(--s3-b);border-color:rgba(216,216,216,.3)}
+
+/* detail sections */
+.det-section{margin-bottom:26px}
+.det-label{font-size:.59rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+
+/* editor pills */
+.editor-pills{display:flex;gap:7px;flex-wrap:wrap}
+.editor-pill{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:var(--rad-sm);border:1px solid var(--bdr2);background:none;font-family:'Poppins',sans-serif;font-size:.74rem;font-weight:500;color:var(--dim);cursor:pointer;transition:all .14s}
+.editor-pill:hover{border-color:#555;color:var(--sub);background:var(--surf2)}
+.editor-pill.on{border-color:var(--bdr3);color:var(--text);background:var(--surf2)}
+.pill-av{width:20px;height:20px;border-radius:50%;background:var(--surf2);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:700;transition:background .12s}
+.editor-pill.on .pill-av{background:var(--bdr3)}
+.pill-check{color:var(--sub);opacity:0;transition:opacity .12s;flex-shrink:0}
+.editor-pill.on .pill-check{opacity:1}
+
+/* inline task add */
+.task-add-row{display:flex;gap:8px;align-items:center;padding:9px 12px;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rad);margin-bottom:8px;transition:border-color .12s}
+.task-add-row:focus-within{border-color:var(--bdr2)}
+.task-add-input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:'Poppins',sans-serif;font-size:.8rem;font-weight:400}
+.task-add-input::placeholder{color:var(--dimmer)}
+.task-add-sep{width:1px;height:16px;background:var(--bdr2);flex-shrink:0}
+.task-add-select{background:none;border:none;outline:none;color:var(--sub);font-family:'Poppins',sans-serif;font-size:.72rem;cursor:pointer;padding:0 4px;min-width:0}
+.task-add-select option{background:#1e1e1e;color:var(--text)}
+
+/* task rows */
+.task-list{display:flex;flex-direction:column;gap:5px}
+.task-row{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rad);padding:10px 13px;display:flex;align-items:center;gap:11px;transition:border-color .12s,background .12s;animation:fadeUp .15s ease}
+.task-row:hover{border-color:var(--bdr2);background:var(--surf2)}
+.task-row.confirming{border-color:var(--red);background:var(--red-b)}
+
+.task-check{width:17px;height:17px;border-radius:4px;border:1px solid var(--bdr2);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;padding:0}
+.task-check:hover{border-color:#555}
+.task-check.done{background:var(--bdr2);border-color:var(--bdr3)}
+
+.task-info{flex:1;min-width:0}
+.task-title{font-size:.8rem;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .15s}
+.task-row.is-done{background:rgba(34,197,94,.05);border-color:rgba(34,197,94,.14)}
+.task-row.is-done:hover{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.22)}
+.task-row.is-done .task-title{color:var(--dim);text-decoration:line-through}
+.task-row.is-late{background:rgba(192,57,43,.06);border-color:rgba(192,57,43,.18)}
+.task-row.is-late:hover{background:rgba(192,57,43,.09);border-color:rgba(192,57,43,.28)}
+.task-project-ref{font-size:.62rem;color:var(--dim);font-style:italic;margin-top:1px}
+
+.task-assignee{display:flex;align-items:center;gap:6px;font-size:.7rem;color:var(--sub);font-weight:500;flex-shrink:0;white-space:nowrap}
+.assignee-av{width:19px;height:19px;border-radius:50%;background:var(--surf2);border:1px solid var(--bdr2);display:flex;align-items:center;justify-content:center;font-size:.49rem;font-weight:700;color:var(--dim)}
+
+/* ── LINKS ── */
+.link-item{display:flex;align-items:center;gap:9px;padding:8px 12px;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rad);margin-bottom:5px;transition:border-color .12s}
+.link-item:hover{border-color:var(--bdr2)}
+.link-anchor{flex:1;font-size:.77rem;color:var(--sub);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:color .12s}
+.link-anchor:hover{color:var(--text)}
+.add-link-btn{display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px dashed var(--bdr2);border-radius:var(--rad);color:var(--dim);font-size:.75rem;cursor:pointer;background:none;font-family:'Poppins',sans-serif;transition:all .12s;width:100%;text-align:left}
+.add-link-btn:hover{border-color:#555;color:var(--sub);background:var(--surf)}
+.link-input-row{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surf);border:1px solid var(--bdr2);border-radius:var(--rad)}
+.link-in{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:'Poppins',sans-serif;font-size:.78rem;min-width:0}
+.link-in::placeholder{color:var(--dimmer)}
+.link-in-sep{width:1px;height:14px;background:var(--bdr2);flex-shrink:0}
+
+.task-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
+
+/* notes */
+.notes-ta{width:100%;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--rad);color:var(--text);font-family:'Poppins',sans-serif;font-size:.79rem;padding:12px 14px;outline:none;resize:vertical;min-height:80px;line-height:1.6;transition:border-color .15s}
+.notes-ta::placeholder{color:var(--dimmer)}
+.notes-ta:focus{border-color:var(--bdr2)}
+
+/* ═══════════════════════════════
+   GLASS DIALOG
+═══════════════════════════════ */
+.glass-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:300;padding:24px;opacity:0;pointer-events:none;transition:opacity .18s}
+.glass-overlay.open{opacity:1;pointer-events:all}
+
+.glass-dialog{background:rgba(24,24,24,.82);backdrop-filter:blur(32px) saturate(1.5);-webkit-backdrop-filter:blur(32px) saturate(1.5);border:1px solid rgba(255,255,255,.07);border-radius:14px;width:100%;max-width:320px;box-shadow:0 8px 48px rgba(0,0,0,.6),0 1px 0 rgba(255,255,255,.05) inset;transform:translateY(8px) scale(.97);transition:transform .2s cubic-bezier(.22,.68,0,1.2);padding:20px 18px 17px}
+.glass-overlay.open .glass-dialog{transform:translateY(0) scale(1)}
+
+.glass-label{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.22);margin-bottom:10px}
+.glass-input{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;color:var(--text);font-family:'Poppins',sans-serif;font-size:.82rem;font-weight:500;padding:10px 12px;outline:none;transition:border-color .15s,background .15s}
+.glass-input::placeholder{color:rgba(255,255,255,.13)}
+.glass-input:focus{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.06)}
+.glass-error{font-size:.62rem;color:#e55;font-weight:500;margin-top:6px;display:none}
+.glass-error.show{display:block}
+.glass-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:14px}
+.glass-cancel{padding:6px 13px;background:none;border:1px solid rgba(255,255,255,.08);border-radius:6px;color:rgba(255,255,255,.35);font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:500;cursor:pointer;transition:all .12s}
+.glass-cancel:hover{border-color:rgba(255,255,255,.16);color:var(--text)}
+.glass-confirm{padding:6px 15px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);border-radius:6px;color:var(--text);font-family:'Poppins',sans-serif;font-size:.72rem;font-weight:600;cursor:pointer;transition:all .12s}
+.glass-confirm:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.2)}
+
+/* ═══════════════════════════════
+   EDIT MODAL
+═══════════════════════════════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);display:flex;align-items:center;justify-content:center;z-index:200;padding:24px;opacity:0;pointer-events:none;transition:opacity .18s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:#1a1a1a;border:1px solid var(--bdr2);border-radius:13px;width:100%;max-width:420px;box-shadow:0 28px 72px rgba(0,0,0,.65);transform:translateY(10px) scale(.98);transition:transform .18s ease}
+.modal-overlay.open .modal{transform:translateY(0) scale(1)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:17px 19px 0}
+.modal-title{font-size:.86rem;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.modal-close{width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:var(--surf2);border:1px solid var(--bdr2);border-radius:5px;color:var(--dim);cursor:pointer;transition:all .12s}
+.modal-close:hover{color:var(--sub)}
+.modal-body{padding:15px 19px 18px;display:flex;flex-direction:column;gap:13px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.field input,.field select,.field textarea{background:var(--bg);border:1px solid var(--bdr2);border-radius:var(--rad-sm);color:var(--text);font-family:'Poppins',sans-serif;font-size:.8rem;padding:9px 11px;outline:none;transition:border-color .15s;width:100%}
+.field input::placeholder,.field textarea::placeholder{color:var(--bdr2)}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#555}
+.field select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;cursor:pointer}
+.field select option{background:#1a1a1a;color:var(--text)}
+.field textarea{resize:vertical;min-height:68px;line-height:1.5}
+.field-error{font-size:.64rem;color:var(--red);font-weight:500;display:none}
+.field.has-error input{border-color:var(--red)}.field.has-error .field-error{display:block}
+.modal-footer{display:flex;gap:7px;justify-content:flex-end;padding:0 19px 18px}
+.btn-cancel{padding:7px 14px;background:none;border:1px solid var(--bdr2);border-radius:6px;color:var(--dim);font-family:'Poppins',sans-serif;font-size:.75rem;font-weight:500;cursor:pointer;transition:all .12s}
+.btn-cancel:hover{color:var(--sub);border-color:#555}
+.btn-save{padding:7px 18px;background:var(--surf2);border:1px solid var(--bdr2);border-radius:6px;color:var(--text);font-family:'Poppins',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;transition:all .12s}
+.btn-save:hover{background:var(--bdr2);border-color:#555}
+
+@media(max-width:640px){.sidebar{width:190px;min-width:190px}.stats-strip{grid-template-columns:repeat(2,1fr)}.content{padding:14px}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-greeting">
+    <div class="greeting-time" id="gperiod"></div>
+    <div class="greeting-main" id="gmain"></div>
+    <div class="greeting-sub">Que bom te ver aqui.</div>
+  </div>
+
+  <div class="s-label">Editores</div>
+  <nav class="s-nav">
+    <button class="n-item" onclick="setView(this,'ed-ashley')" data-view="ed-ashley">
+      <span class="e-avatar">AM</span><span class="n-label">Ashley Michel</span><span class="n-count" id="nc-ed-ashley">0</span>
+    </button>
+    <button class="n-item" onclick="setView(this,'ed-caio')" data-view="ed-caio">
+      <span class="e-avatar">CA</span><span class="n-label">Caio Augusto</span><span class="n-count" id="nc-ed-caio">0</span>
+    </button>
+    <button class="n-item" onclick="setView(this,'ed-rafael')" data-view="ed-rafael">
+      <span class="e-avatar">RC</span><span class="n-label">Rafael Castro</span><span class="n-count" id="nc-ed-rafael">0</span>
+    </button>
+  </nav>
+
+  <div class="s-divider"></div>
+  <div class="s-label">Projetos</div>
+  <nav class="s-nav" id="proj-nav"><div class="proj-empty">Nenhum projeto ainda</div></nav>
+  <div style="flex:1"></div>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left" id="topbar-left">
+      <span class="topbar-title">Todos os vídeos</span>
+    </div>
+    <button class="btn-add" id="btn-topbar">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Adicionar Projeto
+    </button>
+  </div>
+  <div class="content" id="main-content"></div>
+</div>
+</div>
+
+<!-- GLASS — Novo Projeto -->
+<div class="glass-overlay" id="proj-glass" onclick="if(event.target===this)closeGlass()">
+  <div class="glass-dialog">
+    <div class="glass-label">Nome do projeto</div>
+    <input class="glass-input" id="proj-glass-input" type="text" placeholder="Ex: Ep. 01 — Introdução ao canal"/>
+    <div class="glass-error" id="proj-glass-err">Preencha o nome do projeto.</div>
+    <div class="glass-actions">
+      <button class="glass-cancel" onclick="closeGlass()">Cancelar</button>
+      <button class="glass-confirm" onclick="confirmGlass()">Criar</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Editar projeto</div>
+      <button class="modal-close" onclick="closeModal()"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field" id="field-title">
+        <label>Nome do projeto <span style="color:var(--red)">*</span></label>
+        <input type="text" id="input-title" placeholder="Ex: Ep. 01 — Introdução ao canal"/>
+        <span class="field-error">Preencha o nome.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveModal()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ICONS -->
+<svg style="display:none">
+  <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></symbol>
+</svg>
+
+<script>
+/* ══ STORAGE ══ */
+const KP = 'vf_p5', KT = 'vf_t5';
+
+const SEED_P = [
+  {id:uid(),title:'Ep. 01 — Introdução ao canal',           status:'editado',     editors:['Ashley Michel'],notes:'Thumbnail feita. Publicar às 18h.',  createdAt:'2026-04-10',dueDate:'2026-04-18',links:[]},
+  {id:uid(),title:'Ep. 02 — Equipamentos para iniciantes',  status:'editando',    editors:['Caio Augusto'], notes:'Falta colorização e trilha sonora.', createdAt:'2026-04-15',dueDate:'2026-04-25',links:[]},
+  {id:uid(),title:'Ep. 03 — Iluminação natural vs artificial',status:'nao_editado',editors:['Rafael Castro'],notes:'Aguardando editor.',                 createdAt:'2026-04-21',dueDate:'',           links:[]},
+];
+
+function loadP(){const r=localStorage.getItem(KP);if(!r){localStorage.setItem(KP,JSON.stringify(SEED_P));return SEED_P;}return JSON.parse(r)}
+function saveP(v){localStorage.setItem(KP,JSON.stringify(v))}
+function loadT(){const r=localStorage.getItem(KT);return r?JSON.parse(r):[]}
+function saveT(v){localStorage.setItem(KT,JSON.stringify(v))}
+
+/* ══ STATE ══ */
+let view='todos', prevView='todos';
+let confirmPid=null, confirmTid=null, editPid=null;
+let linkInputOpen=false;
+
+const ALL_EDITORS=[
+  {name:'Ashley Michel',init:'AM', view:'ed-ashley'},
+  {name:'Caio Augusto', init:'CA', view:'ed-caio'},
+  {name:'Rafael Castro',init:'RC', view:'ed-rafael'},
+];
+const EDITOR_BY_VIEW={'ed-caio':'Caio Augusto','ed-ashley':'Ashley Michel','ed-rafael':'Rafael Castro'};
+const VID_LABELS={todos:'Todos os projetos',nao_editado:'Não editados',editando:'Em edição',editado:'Editados'};
+const STATUS_LABELS={nao_editado:'Não Editado',editando:'Editando',editado:'Editado'};
+
+/* ══ UTILS ══ */
+function uid(){return Math.random().toString(36).slice(2,9)+Date.now().toString(36)}
+function today(){return new Date().toISOString().split('T')[0]}
+function isLate(p){return p.dueDate&&p.status!=='editado'&&p.dueDate<today()}
+function saveDueDate(pid,val){saveP(loadP().map(p=>p.id===pid?{...p,dueDate:val}:p));render()}
+function fmtDate(d){if(!d)return'';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+/* ══ GREETING ══ */
+function setGreeting(){
+  const h=new Date().getHours();
+  let p,m;
+  if(h>=5&&h<12){p='Manhã';m='Bom dia'}
+  else if(h>=12&&h<18){p='Tarde';m='Boa tarde'}
+  else{p='Noite';m='Boa noite'}
+  document.getElementById('gperiod').textContent=p;
+  document.getElementById('gmain').textContent=m+',';
+}
+
+/* ══ SIDEBAR ══ */
+function renderSidebar(){
+  const projs=loadP(), tasks=loadT();
+
+  document.getElementById('nc-ed-caio').textContent      =tasks.filter(t=>t.assignedTo==='Caio Augusto'&&!t.done).length;
+  document.getElementById('nc-ed-ashley').textContent    =tasks.filter(t=>t.assignedTo==='Ashley Michel'&&!t.done).length;
+  document.getElementById('nc-ed-rafael').textContent    =tasks.filter(t=>t.assignedTo==='Rafael Castro'&&!t.done).length;
+
+  const nav=document.getElementById('proj-nav');
+  if(!projs.length){nav.innerHTML='<div class="proj-empty">Nenhum projeto ainda</div>';}
+  else{
+    nav.innerHTML=projs.map(p=>{
+      const pending=tasks.filter(t=>t.projectId===p.id&&!t.done).length;
+      const vid='proj-'+p.id, isAct=view===vid;
+      return`<button class="n-item${isAct?' active':''}" onclick="openDetail('${p.id}')" data-view="${vid}">
+        <span class="n-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></span>
+        <span class="n-label">${esc(p.title)}</span>
+        <span class="n-count">${pending}</span>
+      </button>`;
+    }).join('');
+  }
+
+  document.querySelectorAll('.n-item[data-view]').forEach(el=>{
+    el.classList.toggle('active',el.dataset.view===view);
+  });
+}
+
+/* ══ TOPBAR ══ */
+function updateTopbar(){
+  const left=document.getElementById('topbar-left');
+  const btn =document.getElementById('btn-topbar');
+
+  if(view.startsWith('proj-')){
+    const pid=view.replace('proj-','');
+    const p=loadP().find(x=>x.id===pid);
+    left.innerHTML=`
+      <button class="back-btn" onclick="goBack()" title="Voltar">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <span class="topbar-title">${p?esc(p.title):'Projeto'}</span>`;
+    btn.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Criar Tarefa`;
+    btn.onclick=()=>{const el=document.getElementById('task-inline');if(el)el.focus()};
+  } else if(view.startsWith('ed-')){
+    const name=EDITOR_BY_VIEW[view]||'Editor';
+    left.innerHTML=`<span class="topbar-title">${esc(name)}</span>`;
+    btn.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Adicionar Projeto`;
+    btn.onclick=openGlass;
+  } else {
+    left.innerHTML=`<span class="topbar-title">${VID_LABELS[view]||'Vídeos'}</span>`;
+    btn.innerHTML=`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Adicionar Projeto`;
+    btn.onclick=openGlass;
+  }
+}
+
+/* ══ MAIN CONTENT ══ */
+function renderMain(){
+  const el=document.getElementById('main-content');
+  if(view.startsWith('proj-'))      renderDetailView(el,view.replace('proj-',''));
+  else if(view.startsWith('ed-'))   renderEditorView(el,view);
+  else                              renderListView(el);
+}
+
+/* — LIST VIEW — */
+function renderListView(el){
+  const projs=loadP();
+  const filtered=view==='todos'?projs:projs.filter(p=>p.status===view);
+
+  const stats=`<div class="stats-strip">
+    <div class="stat-card"><div class="stat-n">${projs.length}</div><div class="stat-l">Total</div></div>
+    <div class="stat-card"><div class="stat-n">${projs.filter(p=>p.status==='nao_editado').length}</div><div class="stat-l">Não Editados</div></div>
+    <div class="stat-card"><div class="stat-n">${projs.filter(p=>p.status==='editando').length}</div><div class="stat-l">Editando</div></div>
+    <div class="stat-card"><div class="stat-n">${projs.filter(p=>p.status==='editado').length}</div><div class="stat-l">Editados</div></div>
+  </div>`;
+
+  let list;
+  if(!filtered.length){
+    list=`<div class="empty-state"><svg width="36" height="36" opacity=".18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg><p>Nenhum projeto aqui ainda</p></div>`;
+  } else {
+    list=`<div class="list-label">${VID_LABELS[view]||'Projetos'}</div><div class="proj-list">${
+      filtered.map((p,i)=>{
+        const conf=confirmPid===p.id;
+        const edDots=p.editors.map(e=>{const ed=ALL_EDITORS.find(x=>x.name===e);return`<span class="p-ed-dot">${ed?ed.init:e[0]}</span>`;}).join('');
+        return`<div class="proj-card${conf?' confirming':''}" onclick="openDetail('${p.id}')">
+          <span class="p-num">${String(i+1).padStart(2,'0')}</span>
+          <div class="p-thumb"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3"/></svg></div>
+          <div class="p-info">
+            <div class="p-title">${esc(p.title)}</div>
+            <div class="p-meta"><span class="p-date">${fmtDate(p.createdAt)}</span>${p.editors.length?`<div class="p-editors">${edDots}</div>`:''}</div>
+            ${p.dueDate?`<div style="margin-top:2px;font-size:.6rem;font-weight:600;color:${isLate(p)?'#c07070':'var(--dim)'}">Entrega: ${fmtDate(p.dueDate)}${isLate(p)?' · Atrasado':''}</div>`:''}
+          </div>
+          <span class="badge ${p.status}"><span class="badge-dot"></span>${STATUS_LABELS[p.status]}</span>
+          <div class="p-actions" onclick="event.stopPropagation()">
+            ${conf?`<div class="confirm-inline"><span class="confirm-text">Remover?</span><button class="btn-yes" onclick="doDelProj('${p.id}')">Sim</button><button class="btn-no" onclick="cancelProj()">Não</button></div>`:`
+            <button class="icon-btn" title="Renomear" onclick="openModal('${p.id}')"><svg width="11" height="11"><use href="#i-edit"/></svg></button>
+            <button class="icon-btn del" title="Remover" onclick="askDelProj('${p.id}')"><svg width="11" height="11"><use href="#i-trash"/></svg></button>`}
+          </div>
+        </div>`;
+      }).join('')
+    }</div>`;
+  }
+  el.innerHTML=stats+list;
+}
+
+/* — DETAIL VIEW — */
+function renderDetailView(el,pid){
+  const p=loadP().find(x=>x.id===pid);
+  if(!p){el.innerHTML='';return;}
+  const tasks=loadT().filter(t=>t.projectId===pid);
+  const done=tasks.filter(t=>t.done).length;
+
+  const late=isLate(p);
+
+  const statusTabs=`<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:24px">
+    <div class="status-tabs" style="margin-bottom:0">${['nao_editado','editando','editado'].map(s=>`
+      <button class="status-tab${p.status===s?' active '+s:''}" onclick="setStatus('${pid}','${s}')">
+        <span style="display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;margin-right:5px;vertical-align:middle;opacity:.7"></span>${STATUS_LABELS[s]}
+      </button>`).join('')}</div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <label style="font-size:.59rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)">Entrega</label>
+      <input type="date" value="${p.dueDate||''}" onchange="saveDueDate('${pid}',this.value)"
+        style="background:var(--surf);border:1px solid ${late?'rgba(192,57,43,.35)':'var(--bdr2)'};border-radius:6px;color:${late?'#c07070':'var(--sub)'};font-family:Poppins,sans-serif;font-size:.72rem;padding:5px 9px;outline:none;cursor:pointer;transition:border-color .15s"
+        onfocus="this.style.borderColor='#555'" onblur="this.style.borderColor='${late?'rgba(192,57,43,.35)':'var(--bdr2)'}'"/>
+      ${late?`<span style="font-size:.6rem;color:#c07070;font-weight:600;letter-spacing:.04em;text-transform:uppercase">Atrasado</span>`:''}
+    </div>
+  </div>`;
+
+  const editorPills=`<div class="det-section">
+    <div class="det-label">Editores</div>
+    <div class="editor-pills">${ALL_EDITORS.map(e=>{
+      const on=(p.editors||[]).includes(e.name);
+      return`<button class="editor-pill${on?' on':''}" onclick="toggleEditor('${pid}','${e.name}')">
+        <span class="pill-av">${e.init}</span>${esc(e.name)}
+        <svg class="pill-check" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>`;
+    }).join('')}</div>
+  </div>`;
+
+  const assigneeOpts=`<option value="">Sem responsável</option>${ALL_EDITORS.map(e=>`<option value="${e.name}">${e.name}</option>`).join('')}`;
+
+  const taskRows=tasks.length?tasks.map(t=>{
+    const conf=confirmTid===t.id;
+    const ed=ALL_EDITORS.find(x=>x.name===t.assignedTo);
+    const checkSvg=t.done?`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`:'';
+    const rowCls=t.done?' is-done':late?' is-late':'';
+    return`<div class="task-row${rowCls}${conf?' confirming':''}" id="tr-${t.id}">
+      <button class="task-check${t.done?' done':''}" onclick="toggleTask('${t.id}')">${checkSvg}</button>
+      <div class="task-info"><div class="task-title">${esc(t.title)}</div></div>
+      ${t.assignedTo?`<div class="task-assignee"><span class="assignee-av">${ed?ed.init:t.assignedTo[0]}</span>${esc(t.assignedTo)}</div>`:'<div class="task-assignee" style="color:var(--dimmer);font-size:.68rem">—</div>'}
+      <div class="task-actions">
+        ${conf?`<div class="confirm-inline"><span class="confirm-text">Remover?</span><button class="btn-yes" onclick="doDelTask('${t.id}')">Sim</button><button class="btn-no" onclick="cancelTask()">Não</button></div>`:`
+        <button class="icon-btn del" onclick="event.stopPropagation();askDelTask('${t.id}')"><svg width="11" height="11"><use href="#i-trash"/></svg></button>`}
+      </div>
+    </div>`;
+  }).join(''):
+  `<div style="padding:18px 0;text-align:center;font-size:.78rem;color:var(--dim)">Nenhuma tarefa ainda.</div>`;
+
+  const taskSection=`<div class="det-section">
+    <div class="det-label">Tarefas &nbsp;<span style="color:var(--dimmer);font-weight:400">${tasks.length-done} pendente${tasks.length-done!==1?'s':''} · ${done} concluída${done!==1?'s':''}</span></div>
+    <div class="task-add-row">
+      <input class="task-add-input" id="task-inline" placeholder="Adicionar subtarefa…" onkeydown="taskInlineKey(event,'${pid}')"/>
+      <div class="task-add-sep"></div>
+      <select class="task-add-select" id="task-inline-sel">${assigneeOpts}</select>
+    </div>
+    <div class="task-list">${taskRows}</div>
+  </div>`;
+
+  const notesSection=`<div class="det-section">
+    <div class="det-label">Notas</div>
+    <textarea class="notes-ta" id="notes-ta" placeholder="Instruções, links, referências…" onblur="saveNotes('${pid}',this.value)">${esc(p.notes||'')}</textarea>
+  </div>`;
+
+  const savedLinks=(p.links||[]).map(l=>`
+    <div class="link-item">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:var(--dim)"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+      <a href="${esc(l.url)}" target="_blank" rel="noopener" class="link-anchor">${esc(l.label||l.url)}</a>
+      <button class="icon-btn del" onclick="deleteLink('${pid}','${l.id}')"><svg width="11" height="11"><use href="#i-trash"/></svg></button>
+    </div>`).join('');
+
+  const linkForm=linkInputOpen?`
+    <div class="link-input-row">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:var(--dim)"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+      <input class="link-in" id="link-url-in" placeholder="https://…" onkeydown="linkKey(event,'${pid}')"/>
+      <div class="link-in-sep"></div>
+      <input class="link-in" id="link-label-in" placeholder="Nome (opcional)" style="max-width:140px" onkeydown="linkKey(event,'${pid}')"/>
+      <button class="icon-btn" style="flex-shrink:0" onclick="hideLinkInput()"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>`:`
+    <button class="add-link-btn" onclick="showLinkInput()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Adicionar link
+    </button>`;
+
+  const linksSection=`<div class="det-section">${savedLinks}${linkForm}</div>`;
+
+  el.innerHTML=`<div class="detail-wrap">${statusTabs}${editorPills}${notesSection}${linksSection}${taskSection}</div>`;
+}
+
+/* — EDITOR VIEW — */
+function renderEditorView(el,edView){
+  const name=EDITOR_BY_VIEW[edView]||'Editor';
+  const tasks=loadT().filter(t=>t.assignedTo===name);
+  const projs=loadP();
+  const done=tasks.filter(t=>t.done).length;
+
+  const stats=`<div class="stats-strip c3">
+    <div class="stat-card"><div class="stat-n">${tasks.length}</div><div class="stat-l">Tarefas</div></div>
+    <div class="stat-card"><div class="stat-n">${tasks.length-done}</div><div class="stat-l">Pendentes</div></div>
+    <div class="stat-card"><div class="stat-n">${done}</div><div class="stat-l">Concluídas</div></div>
+  </div>`;
+
+  let list;
+  if(!tasks.length){
+    list=`<div class="empty-state"><svg width="34" height="34" opacity=".18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg><p>Nenhuma tarefa atribuída a ${esc(name)}</p></div>`;
+  } else {
+    list=`<div class="list-label">Tarefas atribuídas</div><div class="task-list">${tasks.map(t=>{
+      const proj=projs.find(p=>p.id===t.projectId);
+      const conf=confirmTid===t.id;
+      const checkSvg=t.done?`<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`:'';
+      return`<div class="task-row${t.done?' is-done':''}${conf?' confirming':''}" id="tr-${t.id}">
+        <button class="task-check${t.done?' done':''}" onclick="toggleTask('${t.id}')">${checkSvg}</button>
+        <div class="task-info">
+          <div class="task-title">${esc(t.title)}</div>
+          ${proj?`<div class="task-project-ref">${esc(proj.title)}</div>`:''}
+        </div>
+        <div class="task-actions">
+          ${conf?`<div class="confirm-inline"><span class="confirm-text">Remover?</span><button class="btn-yes" onclick="doDelTask('${t.id}')">Sim</button><button class="btn-no" onclick="cancelTask()">Não</button></div>`:`
+          <button class="icon-btn del" onclick="askDelTask('${t.id}')"><svg width="11" height="11"><use href="#i-trash"/></svg></button>`}
+        </div>
+      </div>`;
+    }).join('')}</div>`;
+  }
+  el.innerHTML=stats+list;
+}
+
+/* ══ RENDER MAIN ══ */
+function render(){
+  renderSidebar();
+  updateTopbar();
+  renderMain();
+}
+
+/* ══ NAVIGATION ══ */
+function setView(el,v){
+  prevView=view.startsWith('proj-')?prevView:view;
+  view=v; confirmPid=null; confirmTid=null;
+  render();
+}
+
+function openDetail(pid){
+  prevView=view.startsWith('proj-')?prevView:view;
+  view='proj-'+pid; confirmPid=null; confirmTid=null;
+  render();
+}
+
+function goBack(){
+  view=prevView||'todos';
+  confirmPid=null; confirmTid=null;
+  render();
+}
+
+/* ══ STATUS & EDITORS ══ */
+function setStatus(pid,status){
+  const projs=loadP().map(p=>p.id===pid?{...p,status}:p);
+  saveP(projs); render();
+}
+
+function toggleEditor(pid,name){
+  const projs=loadP().map(p=>{
+    if(p.id!==pid)return p;
+    const eds=p.editors||[];
+    return{...p,editors:eds.includes(name)?eds.filter(e=>e!==name):[...eds,name]};
+  });
+  saveP(projs); render();
+}
+
+/* ══ TASKS ══ */
+function taskInlineKey(e,pid){
+  if(e.key!=='Enter')return;
+  const title=e.target.value.trim();
+  if(!title)return;
+  const assignedTo=document.getElementById('task-inline-sel').value;
+  const tasks=loadT();
+  tasks.push({id:uid(),projectId:pid,title,assignedTo,done:false,createdAt:today()});
+  saveT(tasks);
+  e.target.value='';
+  document.getElementById('task-inline-sel').value='';
+  render();
+  // re-focus input after render
+  setTimeout(()=>{const el=document.getElementById('task-inline');if(el)el.focus();},50);
+}
+
+function toggleTask(id){
+  saveT(loadT().map(t=>t.id===id?{...t,done:!t.done}:t)); render();
+}
+
+function askDelTask(id){confirmTid=id;render()}
+function cancelTask(){confirmTid=null;render()}
+function doDelTask(id){saveT(loadT().filter(t=>t.id!==id));confirmTid=null;render()}
+
+/* ══ LINKS ══ */
+function showLinkInput(){linkInputOpen=true;render();setTimeout(()=>document.getElementById('link-url-in')?.focus(),50)}
+function hideLinkInput(){linkInputOpen=false;render()}
+function linkKey(e,pid){if(e.key==='Enter'){e.preventDefault();addLink(pid)}if(e.key==='Escape')hideLinkInput()}
+function addLink(pid){
+  const url=(document.getElementById('link-url-in')?.value||'').trim();
+  if(!url)return;
+  const label=(document.getElementById('link-label-in')?.value||'').trim();
+  saveP(loadP().map(p=>p.id===pid?{...p,links:[...(p.links||[]),{id:uid(),url,label}]}:p));
+  linkInputOpen=false;render();
+}
+function deleteLink(pid,lid){
+  saveP(loadP().map(p=>p.id===pid?{...p,links:(p.links||[]).filter(l=>l.id!==lid)}:p));
+  render();
+}
+
+/* ══ NOTES ══ */
+function saveNotes(pid,val){
+  const projs=loadP().map(p=>p.id===pid?{...p,notes:val}:p);
+  saveP(projs);
+  renderSidebar(); // silent save, no full re-render
+}
+
+/* ══ PROJECT GLASS ══ */
+function openGlass(){
+  document.getElementById('proj-glass-input').value='';
+  document.getElementById('proj-glass-err').classList.remove('show');
+  document.getElementById('proj-glass').classList.add('open');
+  setTimeout(()=>document.getElementById('proj-glass-input').focus(),80);
+}
+function closeGlass(){document.getElementById('proj-glass').classList.remove('open')}
+function confirmGlass(){
+  const name=document.getElementById('proj-glass-input').value.trim();
+  if(!name){document.getElementById('proj-glass-err').classList.add('show');document.getElementById('proj-glass-input').focus();return;}
+  const projs=loadP();
+  const proj={id:uid(),title:name,status:'nao_editado',editors:[],notes:'',links:[],createdAt:today()};
+  projs.unshift(proj);
+  saveP(projs);
+  closeGlass();
+  prevView=view.startsWith('proj-')?prevView:view;
+  view='proj-'+proj.id;
+  render();
+}
+
+/* ══ EDIT MODAL (rename) ══ */
+function openModal(id){
+  editPid=id;
+  document.getElementById('field-title').classList.remove('has-error');
+  const p=loadP().find(x=>x.id===id);
+  if(p) document.getElementById('input-title').value=p.title;
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('input-title').focus(),80);
+}
+function closeModal(){document.getElementById('modal-overlay').classList.remove('open');editPid=null}
+function saveModal(){
+  const title=document.getElementById('input-title').value.trim();
+  if(!title){document.getElementById('field-title').classList.add('has-error');return;}
+  document.getElementById('field-title').classList.remove('has-error');
+  const projs=loadP().map(p=>p.id===editPid?{...p,title}:p);
+  saveP(projs); closeModal(); render();
+}
+
+/* ══ PROJECT DELETE ══ */
+function askDelProj(id){confirmPid=id;render()}
+function cancelProj(){confirmPid=null;render()}
+function doDelProj(id){
+  saveP(loadP().filter(p=>p.id!==id));
+  saveT(loadT().filter(t=>t.projectId!==id));
+  confirmPid=null;
+  if(view==='proj-'+id) view=prevView||'todos';
+  render();
+}
+
+/* ══ KEYBOARD ══ */
+document.addEventListener('keydown',e=>{
+  const glassOpen=document.getElementById('proj-glass').classList.contains('open');
+  const modalOpen=document.getElementById('modal-overlay').classList.contains('open');
+  if(e.key==='Escape'){
+    if(glassOpen)closeGlass();
+    else if(modalOpen)closeModal();
+    else if(view.startsWith('proj-'))goBack();
+    else if(confirmPid)cancelProj();
+    else if(confirmTid)cancelTask();
+  }
+  if(e.key==='Enter'&&glassOpen){e.preventDefault();confirmGlass()}
+  if((e.metaKey||e.ctrlKey)&&e.key==='Enter'&&modalOpen)saveModal();
+});
+
+/* ══ INIT ══ */
+setGreeting();
+render();
+</script>
+</body>
+</html>
