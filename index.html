@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
@@ -257,7 +260,6 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);-we
 <body>
 <div class="layout">
 
-<!-- ══ SIDEBAR ══ -->
 <aside class="sidebar">
   <div class="sidebar-greeting">
     <div class="greeting-time" id="gperiod"></div>
@@ -284,7 +286,6 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);-we
   <div style="flex:1"></div>
 </aside>
 
-<!-- ══ MAIN ══ -->
 <div class="main">
   <div class="topbar">
     <div class="topbar-left" id="topbar-left">
@@ -299,7 +300,6 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);-we
 </div>
 </div>
 
-<!-- GLASS — Novo Projeto -->
 <div class="glass-overlay" id="proj-glass" onclick="if(event.target===this)closeGlass()">
   <div class="glass-dialog">
     <div class="glass-label">Nome do projeto</div>
@@ -312,7 +312,6 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);-we
   </div>
 </div>
 
-<!-- EDIT MODAL -->
 <div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
   <div class="modal">
     <div class="modal-header">
@@ -333,26 +332,91 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);-we
   </div>
 </div>
 
-<!-- ICONS -->
 <svg style="display:none">
   <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></symbol>
 </svg>
 
 <script>
-/* ══ STORAGE ══ */
-const KP = 'vf_p5', KT = 'vf_t5';
+/* ══ CONFIGURAÇÃO DO SUPABASE ══ */
+const SUPABASE_URL = 'https://putooalmbcrrdmuebose.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_pBU1FhcJmwj2PNUhOVJNeg_QPbiO6zd';
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const SEED_P = [
-  {id:uid(),title:'Ep. 01 — Introdução ao canal',           status:'editado',     editors:['Ashley Michel'],notes:'Thumbnail feita. Publicar às 18h.',  createdAt:'2026-04-10',dueDate:'2026-04-18',links:[]},
-  {id:uid(),title:'Ep. 02 — Equipamentos para iniciantes',  status:'editando',    editors:['Caio Augusto'], notes:'Falta colorização e trilha sonora.', createdAt:'2026-04-15',dueDate:'2026-04-25',links:[]},
-  {id:uid(),title:'Ep. 03 — Iluminação natural vs artificial',status:'nao_editado',editors:['Rafael Castro'],notes:'Aguardando editor.',                 createdAt:'2026-04-21',dueDate:'',           links:[]},
-];
+/* ══ STORAGE (Substituindo LocalStorage) ══ */
+let memProjetos = [];
+let memTarefas = [];
 
-function loadP(){const r=localStorage.getItem(KP);if(!r){localStorage.setItem(KP,JSON.stringify(SEED_P));return SEED_P;}return JSON.parse(r)}
-function saveP(v){localStorage.setItem(KP,JSON.stringify(v))}
-function loadT(){const r=localStorage.getItem(KT);return r?JSON.parse(r):[]}
-function saveT(v){localStorage.setItem(KT,JSON.stringify(v))}
+function loadP() { return memProjetos; }
+function loadT() { return memTarefas; }
+
+function saveP(v) {
+  // Descobre qual projeto mudou para enviar ao Supabase
+  const changedOrNew = v.find(newItem => {
+    const oldItem = memProjetos.find(old => old.id === newItem.id);
+    return JSON.stringify(oldItem) !== JSON.stringify(newItem);
+  });
+  if (changedOrNew) supabase.from('projetos').upsert(changedOrNew).then();
+
+  // Descobre se algum projeto foi deletado
+  const newIds = v.map(p => p.id);
+  const deletedItem = memProjetos.find(old => !newIds.includes(old.id));
+  if (deletedItem) supabase.from('projetos').delete().eq('id', deletedItem.id).then();
+
+  memProjetos = v;
+}
+
+function saveT(v) {
+  // Descobre qual tarefa mudou
+  const changedOrNew = v.find(newItem => {
+    const oldItem = memTarefas.find(old => old.id === newItem.id);
+    return JSON.stringify(oldItem) !== JSON.stringify(newItem);
+  });
+  if (changedOrNew) supabase.from('tarefas').upsert(changedOrNew).then();
+
+  // Descobre se alguma tarefa foi deletada
+  const newIds = v.map(t => t.id);
+  const deletedItem = memTarefas.find(old => !newIds.includes(old.id));
+  if (deletedItem) supabase.from('tarefas').delete().eq('id', deletedItem.id).then();
+
+  memTarefas = v;
+}
+
+/* ══ INICIALIZAÇÃO REALTIME DO BD ══ */
+async function initDatabase() {
+  // Busca os dados iniciais do Supabase
+  const { data: pData } = await supabase.from('projetos').select('*');
+  const { data: tData } = await supabase.from('tarefas').select('*');
+  
+  if (pData) memProjetos = pData;
+  if (tData) memTarefas = tData;
+  render(); // Atualiza a tela com os dados do banco
+
+  // Escuta mudanças de outros computadores/celulares
+  supabase
+    .channel('db-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'projetos' }, payload => {
+      if(payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+        const idx = memProjetos.findIndex(p => p.id === payload.new.id);
+        if(idx > -1) memProjetos[idx] = payload.new;
+        else memProjetos.unshift(payload.new);
+      } else if(payload.eventType === 'DELETE') {
+        memProjetos = memProjetos.filter(p => p.id !== payload.old.id);
+      }
+      render();
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tarefas' }, payload => {
+      if(payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+        const idx = memTarefas.findIndex(t => t.id === payload.new.id);
+        if(idx > -1) memTarefas[idx] = payload.new;
+        else memTarefas.push(payload.new);
+      } else if(payload.eventType === 'DELETE') {
+        memTarefas = memTarefas.filter(t => t.id !== payload.old.id);
+      }
+      render();
+    })
+    .subscribe();
+}
 
 /* ══ STATE ══ */
 let view='todos', prevView='todos';
@@ -775,7 +839,8 @@ document.addEventListener('keydown',e=>{
 
 /* ══ INIT ══ */
 setGreeting();
-render();
+// render() inicial substituído pelo initDatabase() para carregar a nuvem primeiro
+initDatabase();
 </script>
 </body>
 </html>
